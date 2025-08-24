@@ -1,0 +1,25 @@
+package constructor;
+
+public class box {
+	double w,h,d;
+	box(double w1,double h1,double d1)
+	
+	{
+		System.out.println("This is parameterized constructor");
+		w=w1;
+		h=h1;
+		d=d1;
+		System.out.println("the value of w,h,&d is"+w+h+d);
+	}
+    
+
+       public static void main(String[]args)
+       
+{
+    	 
+		 
+		 @SuppressWarnings("unused")
+		 box myobj1 = new box(10,15,20);
+		 
+	
+}}
