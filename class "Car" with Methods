@@ -1,0 +1,35 @@
+package lab4;
+
+public class Car {
+	
+	
+	    String model;
+	    String color;
+
+	    
+	    Car(String model, String color) {
+	        this.model = model;
+	        this.color = color;
+	    }
+
+	    
+	    void start() {
+	        System.out.println("The " + color + " " + model + " has started.");
+	    }
+
+	    void stop() {
+System.out.println("The " + model + " has stopped.");
+	    }
+
+	    // main() method inside Car class itself
+	    public static void main(String[] args) {
+	        Car car1 = new Car("Honda City", "White");
+	        Car car2 = new Car("Ford Mustang", "Red");
+
+	        car1.start();
+	        car1.stop();
+
+	        car2.start();
+	        car2.stop();
+	    }
+	}
