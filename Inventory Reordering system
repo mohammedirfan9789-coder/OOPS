@@ -1,1 +1,166 @@
+1. User Management Module:
+package user;
+import java.sql.*;
+import database.DBConnection;
+public class UserAuth {
+public static boolean login(String username, String password) {
+try {
+Connection con = DBConnection.getConnection();
+PreparedStatement ps = con.prepareStatement(
+"SELECT * FROM users WHERE username=? AND password=?");
 
+ps.setString(1, username);
+ps.setString(2, password);
+ResultSet rs = ps.executeQuery();
+return rs.next();
+} catch (Exception e) {
+e.printStackTrace();
+}
+return false;
+}
+public static boolean register(String username, String password) {
+try {
+Connection con = DBConnection.getConnection();
+PreparedStatement ps = con.prepareStatement(
+"INSERT INTO users(username, password) VALUES(?, ?)");
+ps.setString(1, username);
+ps.setString(2, password);
+return ps.executeUpdate() > 0;
+} catch (Exception e) {
+e.printStackTrace();
+}
+return false;
+}
+}
+2. Inventory Management Module:
+package model;
+import java.io.Serializable;
+public class Product implements Serializable { // Class name updated
+private int productId;
+private String name;
+private int stockLevel; // Replaces vehicle status/model
+private int reorderPoint; // New field for inventory logic
+private String supplier; // New field for reporting
+public Product(int productId, String name, int stockLevel, int reorderPoint, String 
+supplier) {
+this.productId = productId;
+this.name = name;
+this.stockLevel = stockLevel;
+this.reorderPoint = reorderPoint;
+this.supplier = supplier;
+}
+public String toString() {
+return "ID: " + productId + " | Name: " + name +
+" | Stock: " + stockLevel +
+" | ROP: " + reorderPoint + " | Supplier: " + supplier;
+}
+}
+3. Database Management Module:
+package database;
+import java.sql.*;
+public class DBConnection {
+private static Connection conn;
+public static Connection getConnection() {
+try {
+if (conn == null || conn.isClosed()) {
+Class.forName("com.mysql.cj.jdbc.Driver");
+conn = DriverManager.getConnection(
+"jdbc:mysql://localhost:3306/inventory_reorder" // Database name changed
+,
+"root"
+,
+""
+);
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+return conn;
+}
+}
+4. Server Communication Module:
+package server;
+import java.io.*;
+import java.net.*;
+import java.sql.*;
+import java.util.*;
+import database.DBConnection;
+public class InventoryServer { // Class name updated
+public static void main(String[] args) {
+try (ServerSocket serverSocket = new ServerSocket(6060)) {
+System.out.println(" Inventory Server running on port 6060..."); // Output 
+updated
+while (true) {
+Socket socket = serverSocket.accept();
+new ClientHandler(socket).start();
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+}
+class ClientHandler extends Thread {
+private Socket socket;
+public ClientHandler(Socket socket) {
+this.socket = socket;
+}
+public void run() {
+try (ObjectInputStream in = new
+ObjectInputStream(socket.getInputStream());
+ObjectOutputStream out = new
+ObjectOutputStream(socket.getOutputStream())) {
+String command = (String) in.readObject();
+if (command.equals("UPDATE_STOCK")) { // Command updated for stock 
+movement
+// Data fields updated for stock update logic
+String productId = (String) in.readObject(); 
+String quantityChange = (String) in.readObject();
+String newStockLevel = "900"; // Placeholder for actual calculation
+// NOTE: Actual SQL Update logic goes here
+out.writeObject("Stock updated for Product ID: " + productId + ". New Stock: " + 
+newStockLevel); // Message updated
+}
+else if (command.equals("VIEW_REORDERS")) { // Command to view products 
+needing reorder
+ArrayList list = new ArrayList<>();
+Statement st = DBConnection.getConnection().createStatement();
+// SQL updated: Selects products where stock is BELOW the reorder point
+ResultSet rs = st.executeQuery("SELECT p.name, i.stock_level, i.reorder_point, 
+s.name AS supplier_name FROM products p JOIN inventory i ON p.product_id = 
+i.product_id JOIN suppliers s ON p.supplier_id = s.supplier_id WHERE 
+i.stock_level < i.reorder_point"); 
+while (rs.next()) {
+list.add(rs.getString("name") + 
+" | Stock: " + rs.getInt("stock_level") +
+" | ROP: " + rs.getInt("reorder_point") + 
+" | Supplier: " + rs.getString("supplier_name") + " -- REORDER REQUIRED"); //
+out.writeObject(list);
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+}
+5. Reporting & Analytics Module:
+package report;
+import java.sql.*;
+import database.DBConnection;
+public class ReportGenerator { // Class name maintained
+public static void generateStockStatusReport() { // Method name updated
+try {
+Connection con = DBConnection.getConnection();
+Statement st = con.createStatement();
+// SQL updated: Counts items that are BELOW ROP vs. SUFFICIENT
+ResultSet rs = st.executeQuery("SELECT CASE WHEN stock_level < 
+reorder_point THEN 'BELOW_ROP' ELSE 'SUFFICIENT' END AS status, 
+COUNT(product_id) AS total FROM inventory GROUP BY status"); 
+System.out.println("\nInventory Status Summary:"); // Output updated
+System.out.println("--------------------------------");
+while (rs.next()) {
+System.out.println(rs.getString("status") + " : " + rs.getInt("total") + " products"); // 
+Output updated
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
